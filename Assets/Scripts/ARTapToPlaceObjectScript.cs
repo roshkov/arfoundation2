@@ -3,18 +3,28 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
-
+using System;
 
 [RequireComponent(typeof(ARRaycastManager))]
 public class ARTapToPlaceObjectScript : MonoBehaviour
 {
     [SerializeField]
-    public GameObject gameObjectToInstantiate; //what we place in the space
-    private GameObject spawneObject;    
+
+    //what we place in the space
+    public GameObject gameObjectToInstantiate; 
+
+    private GameObject spawnedObject;    
+
     private ARRaycastManager _arRaycastManager;
+
     private Vector2 touchPosition;  //where we touch with the finger
 
+
+    // is used when you change the animation, so it will appear at the same place 
+    //with no need to press the screen with the finger in order it to appear
+    // private bool noFingerHitNeeded = false ;    
     static List<ARRaycastHit> hits = new List<ARRaycastHit>();
+    
     
     
 
@@ -33,26 +43,45 @@ public class ARTapToPlaceObjectScript : MonoBehaviour
          return false;
      }
     
-        
+     public void setGameObjectToInstantiate(GameObject newObj) {
+         Destroy (spawnedObject);
+         spawnedObject = null;
+         gameObjectToInstantiate = newObj; 
+     }  
+
+     public void stopAnimation () {
+         gameObjectToInstantiate.GetComponent<Animation>().Stop();
+     }
+     public void playAnimation (String name) {
+         gameObjectToInstantiate.GetComponent<Animation>().Play(name);
+     }
     
 
-    // Update is called once per frame
     void Update()
     {
-        if (!TryGetTouchPosition(out Vector2 touchPosition)) 
-        return;
+        
+            if (!TryGetTouchPosition(out Vector2 touchPosition)) 
+            return;
 
-        if (_arRaycastManager.Raycast(touchPosition, hits, TrackableType.PlaneWithinPolygon)) {
-            var hitPose = hits[0].pose;
+            if (_arRaycastManager.Raycast(touchPosition, hits, TrackableType.PlaneWithinPolygon)) {
+                spawnOrReplaceTheObject(hits[0].pose);  
+            }
+           
+    }
 
-            if (spawneObject == null ) 
+
+
+    public void spawnOrReplaceTheObject (Pose hitPose) {
+            if (spawnedObject == null ) 
             {
-                spawneObject = Instantiate(gameObjectToInstantiate, hitPose.position, hitPose.rotation) ;
+                spawnedObject = Instantiate(gameObjectToInstantiate, hitPose.position, hitPose.rotation) ;
             }
             else 
             {
-                spawneObject.transform.position = hitPose.position;
+                spawnedObject.transform.position = hitPose.position;
             }
-        }
     }
+
+
+
 }
